@@ -32,6 +32,8 @@ Vulkan is a graphics API. yea. I'm going through this intro to vulkan from [vkgu
 
 - **VkFence:** Synchronizes GPU to CPU execution of commands. Used to know if a command buffer has finished being exectured on the GPU.
 
+---
+
 ## Heres some sudo code for a render-loop in vulkan:
 
 ```c++
@@ -93,9 +95,54 @@ vkQueuePresent(graphicsQueue, renderSemaphore);
 
 A **VkImage** is a handle to the actual image object to use as texture or to render into. A **VkImageView** is a wrapper for that image. It allows to do things like swap the colors.
 
-![[vulkan-commands-diagram.png]]
+![[vulkan-commands.png]]
 
 The general flow to execute commands is:
 -   You allocate a **VkCommandBuffer** from a **VkCommandPool**
 -   You record commands into the command buffer, using **VkCmdXXXXX** functions.
 -   You submit the command buffer into a **VkQueue**, which starts executing the commands.
+
+---
+
+## Renderpass
+
+The image life will go something like this:
+UNDEFINED -> RenderPass Begins -> Subpass 0 begins (Transition to Attachment Optimal) -> Subpass 0 renders -> Subpass 0 ends -> Renderpass Ends (Transitions to Present Source)
+
+**VkFence** is used for GPU -> CPU communication. Pretty much a callback that the GPU can call to let the CPU know it finished something.
+
+![[vk-fence.png]]
+
+**VkSemaphore** is used for GPU -> GPU sync. There are two types of semaphores,
+- Signal
+	- The operation will immediately "lock" said semaphore when it exectures, and unlock once it finishes execution.
+- Wait
+	- The operation will wait until that semaphore is unlocked to begin execution.
+	- 
+Pseudocode example:
+```c++
+VkSemaphore Task1Semaphore;
+VkSemaphore Task2Semaphore;
+
+VkOperationInfo OpAlphaInfo;
+// Operation Alpha will signal the semaphore 1
+OpAlphaInfo.signalSemaphore = Task1Semaphore;
+
+VkDoSomething(OpAlphaInfo);
+
+VkOperationInfo OpBetaInfo;
+
+// Operation Beta signals semaphore 2, and waits on semaphore 1
+OpBetaInfo.signalSemaphore = Task2Semaphore;
+OpBetaInfo.waitSemaphore = Task1Semaphore;
+
+VkDoSomething(OpBetaInfo);
+
+VkOperationInfo OpGammaInfo;
+//Operation gamma waits on semaphore 2
+OpGammaInfo.waitSemaphore = Task2Semaphore;
+
+VkDoSomething(OpGammaInfo);
+```
+
+The execution order of the GPU-side commands will be Alpha->Beta->Gamma . Operation Beta will not start until Alpha has fully finished its execution. If you don’t use semaphores in this case, the commands of the 3 operations might execute in parallel, interleaved with each other.
