@@ -95,7 +95,7 @@ vkQueuePresent(graphicsQueue, renderSemaphore);
 
 A **VkImage** is a handle to the actual image object to use as texture or to render into. A **VkImageView** is a wrapper for that image. It allows to do things like swap the colors.
 
-![[vulkan-commands.png]]
+![vulkan-commands](vulkan-commands.png)
 
 The general flow to execute commands is:
 -   You allocate a **VkCommandBuffer** from a **VkCommandPool**
@@ -111,14 +111,14 @@ UNDEFINED -> RenderPass Begins -> Subpass 0 begins (Transition to Attachment Opt
 
 **VkFence** is used for GPU -> CPU communication. Pretty much a callback that the GPU can call to let the CPU know it finished something.
 
-![[vk-fence.png]]
+![vk-fence](vk-fence.png)
 
 **VkSemaphore** is used for GPU -> GPU sync. There are two types of semaphores,
 - Signal
 	- The operation will immediately "lock" said semaphore when it exectures, and unlock once it finishes execution.
 - Wait
 	- The operation will wait until that semaphore is unlocked to begin execution.
-	- 
+
 Pseudocode example:
 ```c++
 VkSemaphore Task1Semaphore;
